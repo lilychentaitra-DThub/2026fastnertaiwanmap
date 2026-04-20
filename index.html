@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>2026 扣件展｜拜訪打勾</title>
+
+<!-- Firebase compat SDK (全域可用，最穩定) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f1117;color:#e8eaf0;overflow:hidden;height:100dvh}
@@ -13,17 +18,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 @media(max-width:767px){
   body{overflow:auto;height:auto}
   .app{display:flex;flex-direction:column;height:auto;min-height:100dvh}
-  .sidebar{display:none;border-right:none;border-bottom:1px solid #2e3350}
-  .sidebar.open{display:flex;position:fixed;inset:0;z-index:200;width:85vw;max-width:320px;box-shadow:4px 0 24px rgba(0,0,0,.5)}
+  .sidebar{display:none}
+  .sidebar.open{display:flex;position:fixed;inset:0;z-index:200;width:85vw;max-width:320px;box-shadow:4px 0 24px rgba(0,0,0,.6)}
   .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:199}
   .overlay.show{display:block}
   .main{flex:1}
   .mob-header{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#1a1d27;border-bottom:1px solid #2e3350;position:sticky;top:0;z-index:100}
   .mob-header h1{font-size:14px;font-weight:700;flex:1}
-  .mob-header .prog-mini{font-size:11px;color:#16a34a;white-space:nowrap}
+  .prog-mini{font-size:11px;color:#16a34a;white-space:nowrap}
   .hamburger{background:none;border:1px solid #2e3350;border-radius:6px;color:#e8eaf0;cursor:pointer;padding:6px 8px;font-size:16px;line-height:1}
   .map-cont{overflow:auto;-webkit-overflow-scrolling:touch}
-  .tabs{overflow-x:auto;white-space:nowrap}
 }
 @media(min-width:768px){
   .mob-header{display:none}
@@ -31,9 +35,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 }
 .sb-top{padding:10px;border-bottom:1px solid #2e3350;flex-shrink:0}
 .sb-logo{font-size:13px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
-.sb-close{display:none;background:none;border:none;color:#7a80a0;font-size:18px;cursor:pointer;padding:2px 4px}
+.sb-close{display:none;background:none;border:none;color:#7a80a0;font-size:20px;cursor:pointer;padding:0 4px}
 @media(max-width:767px){.sb-close{display:block}}
-.sync-dot{width:7px;height:7px;border-radius:50%;background:#f59e0b;display:inline-block;margin-right:5px;transition:background .3s}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;margin-right:5px;flex-shrink:0}
 .sync-dot.live{background:#22c55e}
 .sync-dot.err{background:#ef4444}
 .search-box{width:100%;padding:7px 10px;font-size:13px;border:1px solid #2e3350;border-radius:6px;background:#22263a;color:#e8eaf0;outline:none;margin-bottom:8px}
@@ -49,14 +53,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 .vendor-list::-webkit-scrollbar{width:3px}
 .vendor-list::-webkit-scrollbar-thumb{background:#2e3350;border-radius:2px}
 .grp-hdr{padding:7px 12px 3px;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#7a80a0}
-.vi{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;border-left:3px solid transparent}
-.vi:active{background:#22263a}
+.vi{display:flex;align-items:center;gap:8px;padding:8px 12px;border-left:3px solid transparent}
 .vi.done .vn{text-decoration:line-through;color:#7a80a0}
 .vdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.vn{font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vn{font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
 .vb{font-size:10px;font-family:monospace;color:#7a80a0;background:#22263a;padding:1px 5px;border-radius:3px;white-space:nowrap}
 .chk{width:18px;height:18px;flex-shrink:0;cursor:pointer;accent-color:#22c55e}
-.tabs{display:flex;border-bottom:1px solid #2e3350;background:#1a1d27;padding:0 12px;flex-shrink:0}
+.tabs{display:flex;border-bottom:1px solid #2e3350;background:#1a1d27;padding:0 12px;flex-shrink:0;overflow-x:auto}
 .tab{background:none;border:none;border-bottom:2px solid transparent;color:#7a80a0;cursor:pointer;font-size:13px;font-weight:500;padding:10px 12px;margin-bottom:-1px;white-space:nowrap}
 .tab.active{color:#4f9cf9;border-bottom-color:#4f9cf9}
 .tab-content{display:none;flex:1;overflow:hidden;flex-direction:column;min-height:0}
@@ -66,12 +69,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 .d-grp{font-size:15px;font-weight:700;font-family:monospace}
 .d-name{font-size:12px;flex:1}
 .d-done{font-size:11px;font-weight:600;color:#16a34a;padding:2px 7px;background:rgba(34,197,94,.15);border-radius:10px;white-space:nowrap}
-.syncbar{font-size:10px;color:#7a80a0;padding:3px 12px;background:#1a1d27;border-bottom:1px solid #2e3350;flex-shrink:0;display:flex;align-items:center;gap:6px}
+.syncbar{font-size:11px;color:#7a80a0;padding:4px 12px;background:#1a1d27;border-bottom:1px solid #2e3350;flex-shrink:0;display:flex;align-items:center;gap:6px}
 .map-cont{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:10px}
 .map-wrap{position:relative;display:inline-block;min-width:720px}
-.map-wrap img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
+.map-wrap img{display:block;width:100%;height:auto;user-select:none}
 .map-ov{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
-.zone{position:absolute;cursor:pointer;pointer-events:all;border-radius:4px;transition:opacity .15s}
+.zone{position:absolute;cursor:pointer;pointer-events:all;border-radius:4px}
 .legend{display:flex;gap:6px;flex-wrap:wrap;padding:6px 12px;border-bottom:1px solid #2e3350;background:#1a1d27;flex-shrink:0;overflow-x:auto}
 .leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:#7a80a0;cursor:pointer;white-space:nowrap}
 .leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
@@ -81,7 +84,6 @@ thead tr{background:#22263a;position:sticky;top:0;z-index:5}
 th{padding:8px 10px;text-align:left;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#7a80a0;border-bottom:1px solid #2e3350;white-space:nowrap}
 td{padding:7px 10px;border-bottom:1px solid rgba(46,51,80,.4)}
 tbody tr{cursor:pointer}
-tbody tr:active{background:rgba(255,255,255,.03)}
 tbody tr.done-row td:nth-child(2){text-decoration:line-through;color:#7a80a0}
 .badge{display:inline-block;border-radius:4px;font-size:10px;font-weight:600;padding:2px 6px}
 .chk-td{text-align:center;width:40px}
@@ -93,6 +95,7 @@ tbody tr.done-row td:nth-child(2){text-decoration:line-through;color:#7a80a0}
 </style>
 </head>
 <body>
+
 <div id="tooltip"></div>
 <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 
@@ -158,10 +161,8 @@ tbody tr.done-row td:nth-child(2){text-decoration:line-through;color:#7a80a0}
   </main>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-database.js";
-
+<script>
+// ── Firebase 初始化 ──
 const firebaseConfig = {
   apiKey: "AIzaSyAG9l1BFMQRicLnnRQMwhaJbaJtTWONrEY",
   authDomain: "dtatfastenertaiwan.firebaseapp.com",
@@ -169,105 +170,106 @@ const firebaseConfig = {
   projectId: "dtatfastenertaiwan",
   storageBucket: "dtatfastenertaiwan.firebasestorage.app",
   messagingSenderId: "822435334744",
-  appId: "1:822435334744:web:b88e96fd0546ec5157982d",
-  measurementId: "G-CTDTSP3ZYT"
+  appId: "1:822435334744:web:b88e96fd0546ec5157982d"
 };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const visitedRef = db.ref("fastener2026/visited");
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const visitedRef = ref(db, 'fastener2026/visited');
-
-const GROUPS={
-  'N-A':{person:'心如',color:'#3b82f6',count:40},
-  'N-B':{person:'家安',color:'#10b981',count:40},
-  'N-C':{person:'書涵',color:'#f59e0b',count:40},
-  'N-D':{person:'Lily',color:'#a855f7',count:28},
-  'S-A':{person:'思怡',color:'#ef4444',count:40},
-  'S-B':{person:'家安',color:'#06b6d4',count:40},
-  'S-C':{person:'Lily',color:'#84cc16',count:40},
-  'S-D':{person:'Lily',color:'#f97316',count:14},
+// ── 資料 ──
+const GROUPS = {
+  "N-A":{person:"心如",color:"#3b82f6",count:40},
+  "N-B":{person:"家安",color:"#10b981",count:40},
+  "N-C":{person:"書涵",color:"#f59e0b",count:40},
+  "N-D":{person:"Lily",color:"#a855f7",count:28},
+  "S-A":{person:"思怡",color:"#ef4444",count:40},
+  "S-B":{person:"家安",color:"#06b6d4",count:40},
+  "S-C":{person:"Lily",color:"#84cc16",count:40},
+  "S-D":{person:"Lily",color:"#f97316",count:14}
 };
 const RAW=[
-  [53,'劦發企業','N1102','N-A'],[189,'淳康國際','N1106','N-A'],[141,'新展工廠','N1108','N-A'],[133,'慶達科技','N1114','N-A'],[19,'世豐螺絲','N1126','N-A'],[76,'和勤精機','N1136','N-A'],[154,'春日機械工業','N1136','N-A'],[156,'春邦精密','N1136','N-A'],[157,'春雨工廠','N1136','N-A'],[170,'榮剛材料科技','N1136','N-A'],[166,'東徽企業','N1150','N-A'],[239,'茂異實業','N1204','N-A'],[183,'永德興','N1205','N-A'],[82,'國聯螺絲工業','N1208','N-A'],[71,'台灣螺絲工業同業公會','N1212','N-A'],[112,'岡岩','N1220','N-A'],[130,'恒耀工業','N1250','N-A'],[148,'昇錩實業','N1303','N-A'],[315,'龍昌螺絲工廠','N1304','N-A'],[165,'本原企業','N1307','N-A'],[256,'重原企業','N1308','N-A'],[221,'美聯精密工業','N1312','N-A'],[191,'濱井企業','N1314','N-A'],[228,'聚亨企業','N1318','N-A'],[100,'宏穎企業','N1328','N-A'],[196,'瑞滬企業','N1349','N-A'],[212,'福光企業','N1403','N-A'],[236,'艾諾','N1404','N-A'],[206,'盛融企業','N1407','N-A'],[181,'毓盛科技工業','N1408','N-A'],[185,'泓盛興業','N1410','N-A'],[182,'永傑實業','N1411','N-A'],[118,'常進工業','N1413','N-A'],[195,'瑋展企業','N1414','N-A'],[192,'瀛春實業','N1418','N-A'],[88,'大楊實業','N1420','N-A'],[258,'金全益','N1426','N-A'],[109,'尚余企業','N1435','N-A'],[250,'貿詮實業','N1443','N-A'],[79,'喬邁企業','N1450','N-A'],
-  [314,'龍志五金工業','N1503','N-B'],[42,'允拓材料科技','N1504','N-B'],[122,'建龍工業','N1507','N-B'],[265,'鉅創國際五金','N1509','N-B'],[34,'佾銳科技五金','N1511','N-B'],[280,'鑫成星緊固件','N1512','N-B'],[163,'晴岡企業','N1513','N-B'],[229,'至善行興業','N1514','N-B'],[97,'宏伽工業','N1517','N-B'],[153,'春名','N1518','N-B'],[111,'岡山東穎開發','N1520','N-B'],[253,'路竹新益工廠','N1526','N-B'],[299,'順承企業','N1536','N-B'],[169,'格福興業','N1546','N-B'],[75,'吉立登實業','N1550','N-B'],[284,'長益螺絲','N1603','N-B'],[155,'春澤企業','N1607','N-B'],[272,'鋐騰國際','N1609','N-B'],[143,'新菲斯','N1611','N-B'],[167,'林裕工廠','N1615','N-B'],[22,'久美特企業','N1645','N-B'],[40,'傑螺工業','N1649','N-B'],[270,'銳德克科技','N2108','N-B'],[98,'宏楷科技','N2128','N-B'],[246,'誠睿科技實業','N2134','N-B'],[73,'台超萃取洗淨精機','N2142','N-B'],[251,'超賀空壓科技','N2146','N-B'],[213,'禾億五金','N2204','N-B'],[243,'蘇氏精密工具','N2208','N-B'],[123,'強新工業','N2212','N-B'],[187,'浚展科技','N2228','N-B'],[20,'中碩機械','N2232','N-B'],[203,'皓正','N2236','N-B'],[286,'長達國際','N2240','N-B'],[84,'基準科技','N2242','N-B'],[211,'祥銨金屬','N2245','N-B'],[101,'宏舜企業','N2246','N-B'],[231,'臺灣鉅佳貿易行','N2247','N-B'],[24,'亞東公證','N2248','N-B'],[158,'昭俐','N2249','N-B'],
-  [129,'恒耀國際','N2301','N-C'],[173,'樹德企業','N2308','N-C'],[86,'大寶精密工具','N2317','N-C'],[217,'精湛光學科技','N2318','N-C'],[120,'廣泰金屬工業','N2328','N-C'],[216,'精斌企業','N2331','N-C'],[36,'供群科技','N2332','N-C'],[137,'振鋒企業','N2335','N-C'],[49,'八旺實業','N2336','N-C'],[176,'歐測','N2339','N-C'],[90,'大鎪科技','N2340','N-C'],[68,'台灣富樂','N2341','N-C'],[210,'祐祥事業','N2342','N-C'],[302,'首君企業','N2345','N-C'],[121,'廣源裕實業','N2346','N-C'],[30,'佑宜昌工業','N2347','N-C'],[261,'金禾昌','N2348','N-C'],[83,'國際精工','N2350','N-C'],[108,'寶資工業','N2402','N-C'],[306,'高熱爐業','N2407','N-C'],[313,'鼎誠扣件科技','N2408','N-C'],[67,'台灣基恩斯','N2410','N-C'],[289,'陽屹科技','N2414','N-C'],[135,'拓鑫實業','N2418','N-C'],[300,'順興達','N2424','N-C'],[237,'若雷國際','N2428','N-C'],[21,'久恩企業','N2431','N-C'],[105,'宸富國際','N2432','N-C'],[80,'國祥貿易','N2434','N-C'],[175,'欣錦智能科技','N2435','N-C'],[225,'翔宣富企業','N2436','N-C'],[52,'創維產業','N2439','N-C'],[64,'台灣博曼','N2440','N-C'],[149,'昌勇實業','N2442','N-C'],[39,'偕盟興業','N2443','N-C'],[275,'錳鋼企業','N2445','N-C'],[95,'安喬模具','N2447','N-C'],[63,'台灣中澤','N2448','N-C'],[199,'畯豪科技','N2449','N-C'],[134,'托福實業','N2502','N-C'],
-  [74,'吉瞬興業','N2508','N-D'],[103,'宏銓精密工業','N2509','N-D'],[18,'上冠品','N2518','N-D'],[69,'台灣牙板企業','N2524','N-D'],[304,'馬波斯精密','N2527','N-D'],[232,'臺美科','N2528','N-D'],[162,'普笠國際','N2532','N-D'],[99,'宏源包材','N2533','N-D'],[17,'三鎂鋼刷工業','N2534','N-D'],[70,'台灣美創','N2535','N-D'],[116,'巨鎰','N2536','N-D'],[54,'勇信精密工具','N2538','N-D'],[44,'元利儀器','N2539','N-D'],[65,'台灣喬哈斯科技','N2540','N-D'],[144,'新豐創新技術整合','N2541','N-D'],[205,'益順泰實業','N2542','N-D'],[234,'舜富','N2544','N-D'],[291,'隆穎精密','N2547','N-D'],[208,'真環科技','N2548','N-D'],[37,'俊益鋼鐵','N2549','N-D'],[31,'佑詮工業','N2550','N-D'],[32,'佛帝克企業','N2627','N-D'],[207,'盛鴻金屬科技','N2631','N-D'],[115,'巨展模具工業','N2633','N-D'],[274,'錩鋼精密科技','N2635','N-D'],[294,'雄豪精密','N2639','N-D'],[119,'廣柏實業','N2641','N-D'],[287,'開南金屬工業','N2643','N-D'],
-  [48,'全岑','S1106','S-A'],[113,'峪億五金','S1108','S-A'],[308,'鴻錡興業','S1110','S-A'],[106,'寬仕工業','S1116','S-A'],[230,'至盈實業','S1136','S-A'],[267,'鉑川','S1136','S-A'],[269,'銘慧盛興業','S1152','S-A'],[259,'金利興精密企業','S1201','S-A'],[56,'匯達實業','S1202','S-A'],[288,'開懋','S1203','S-A'],[190,'添福德','S1205','S-A'],[271,'銳禾工業','S1206','S-A'],[282,'長宏工廠','S1210','S-A'],[174,'欣瑞五金企業','S1214','S-A'],[51,'冠誠國際','S1216','S-A'],[92,'奇貿','S1220','S-A'],[60,'友鋮','S1226','S-A'],[305,'高源精密','S1253','S-A'],[260,'金瑞盛實業','S1255','S-A'],[168,'柯穎五金企業','S1301','S-A'],[15,'三友璟工業','S1302','S-A'],[215,'竣鑫工業','S1303','S-A'],[204,'益實企業','S1305','S-A'],[131,'惠旺工業','S1306','S-A'],[58,'協順工業','S1309','S-A'],[298,'韋奕工業','S1310','S-A'],[186,'法斯訥企業','S1313','S-A'],[28,'企龍企業','S1314','S-A'],[273,'鋒泉螺釘','S1315','S-A'],[93,'如保興業','S1316','S-A'],[147,'昇達鑫興業','S1320','S-A'],[164,'朝友工業','S1326','S-A'],[107,'寶源複合材料','S1330','S-A'],[200,'登琳實業','S1351','S-A'],[238,'英德工業','S1352','S-A'],[50,'六曜實業','S1401','S-A'],[283,'長晉盛金屬','S1402','S-A'],[240,'華洋科技','S1405','S-A'],[278,'鐿富企業','S1406','S-A'],[197,'璉龍實業','S1407','S-A'],
-  [309,'鷹世服','S1409','S-B'],[146,'日昇彈簧','S1410','S-B'],[38,'信嵐國際貿易','S1413','S-B'],[46,'元穩實業','S1414','S-B'],[226,'翔笙精密工業','S1415','S-B'],[151,'易連工業','S1416','S-B'],[266,'鉅耕','S1420','S-B'],[27,'今湛企業','S1426','S-B'],[233,'舜倡發企業','S1430','S-B'],[124,'強鑫工業','S1452','S-B'],[180,'毅程工業','S1501','S-B'],[57,'千富企業','S1502','S-B'],[297,'震保企業','S1504','S-B'],[281,'鑫瑞精密工業','S1505','S-B'],[268,'鉮達國際','S1506','S-B'],[262,'金詳企業','S1507','S-B'],[126,'德義海','S1509','S-B'],[161,'普力美精密','S1510','S-B'],[301,'順通國際','S1512','S-B'],[102,'宏茂五金','S1513','S-B'],[72,'台灣銘板','S1514','S-B'],[263,'金鏘國際','S1515','S-B'],[201,'登馳國際','S1516','S-B'],[290,'隆意工業','S1520','S-B'],[152,'昕群企業','S1526','S-B'],[276,'鍵瑋企業','S1528','S-B'],[91,'太子螺絲','S1536','S-B'],[224,'翊創國際企業','S1552','S-B'],[293,'雄益國際','S1603','S-B'],[242,'華邑金屬工業','S1605','S-B'],[132,'慧準精密工具','S1609','S-B'],[223,'義維力國際','S1613','S-B'],[317,'龍浦實業','S1615','S-B'],[33,'佶億工廠','S1617','S-B'],[77,'和泰產業','S1619','S-B'],[94,'威力寶貿易','S2106','S-B'],[59,'友信機械','S2112','S-B'],[254,'連翔工業','S2112','S-B'],[179,'正曜企業','S2120','S-B'],[214,'秉鋒興業','S2132','S-B'],
-  [194,'琛元企業','S2140','S-C'],[145,'旗林','S2144','S-C'],[160,'昶詠機械','S2148','S-C'],[198,'田豐空油壓','S2151','S-C'],[316,'龍業百起','S2205','S-C'],[285,'長薔機械','S2220','S-C'],[26,'仁陽工業','S2232','S-C'],[16,'三永電熱機械','S2240','S-C'],[193,'珈鋐機械','S2244','S-C'],[142,'新環隆機械工業','S2251','S-C'],[62,'台南振昌電機','S2252','S-C'],[127,'忠群螺絲五金','S2305','S-C'],[35,'侑城','S2306','S-C'],[277,'鍵財機械企業','S2311','S-C'],[136,'振太機械企業','S2320','S-C'],[178,'正一直線機械廠','S2328','S-C'],[244,'詮豐傳動科技','S2332','S-C'],[45,'元勝鐵工廠','S2336','S-C'],[184,'沛珅精密工業','S2340','S-C'],[188,'淯群機械','S2344','S-C'],[177,'正一伸線機械廠','S2348','S-C'],[257,'金上源機械','S2350','S-C'],[227,'翰泰含浸企業','S2403','S-C'],[139,'捷禾企業','S2404','S-C'],[29,'伯獅精工','S2408','S-C'],[114,'崇曜國際實業','S2411','S-C'],[23,'久邑','S2412','S-C'],[96,'安拓實業','S2414','S-C'],[138,'捷仂機械','S2420','S-C'],[41,'優廉機器','S2426','S-C'],[245,'詮豐精密工具','S2432','S-C'],[311,'鼎富隆精密機械','S2436','S-C'],[128,'怡邦精密','S2448','S-C'],[89,'大連機械工業','S2450','S-C'],[87,'大憲光學企業','S2451','S-C'],[279,'鑫廣工業','S2503','S-C'],[310,'黃朝泰企業','S2504','S-C'],[295,'集財實業','S2507','S-C'],[110,'山郁貿易','S2508','S-C'],[140,'捷領螺絲興業','S2512','S-C'],
-  [117,'帝潮實業','S2516','S-D'],[81,'國聯機械實業','S2520','S-D'],[292,'雄仁工業','S2528','S-D'],[264,'金騏工業','S2531','S-D'],[43,'允鑫五金工業','S2532','S-D'],[150,'明福駿','S2533','S-D'],[159,'昱銘穎','S2536','S-D'],[241,'華燿精密','S2603','S-D'],[47,'全宏精密工業','S2607','S-D'],[202,'皇亮精密企業','S2609','S-D'],[171,'榮燊科技','S2611','S-D'],[255,'進旌工業','S2613','S-D'],[55,'勝隆鉚釘','S2631','S-D'],[235,'舜煜實業','S2635','S-D'],
+  [53,"劦發企業","N1102","N-A"],[189,"淳康國際","N1106","N-A"],[141,"新展工廠","N1108","N-A"],[133,"慶達科技","N1114","N-A"],[19,"世豐螺絲","N1126","N-A"],[76,"和勤精機","N1136","N-A"],[154,"春日機械工業","N1136","N-A"],[156,"春邦精密","N1136","N-A"],[157,"春雨工廠","N1136","N-A"],[170,"榮剛材料科技","N1136","N-A"],[166,"東徽企業","N1150","N-A"],[239,"茂異實業","N1204","N-A"],[183,"永德興","N1205","N-A"],[82,"國聯螺絲工業","N1208","N-A"],[71,"台灣螺絲工業同業公會","N1212","N-A"],[112,"岡岩","N1220","N-A"],[130,"恒耀工業","N1250","N-A"],[148,"昇錩實業","N1303","N-A"],[315,"龍昌螺絲工廠","N1304","N-A"],[165,"本原企業","N1307","N-A"],[256,"重原企業","N1308","N-A"],[221,"美聯精密工業","N1312","N-A"],[191,"濱井企業","N1314","N-A"],[228,"聚亨企業","N1318","N-A"],[100,"宏穎企業","N1328","N-A"],[196,"瑞滬企業","N1349","N-A"],[212,"福光企業","N1403","N-A"],[236,"艾諾","N1404","N-A"],[206,"盛融企業","N1407","N-A"],[181,"毓盛科技工業","N1408","N-A"],[185,"泓盛興業","N1410","N-A"],[182,"永傑實業","N1411","N-A"],[118,"常進工業","N1413","N-A"],[195,"瑋展企業","N1414","N-A"],[192,"瀛春實業","N1418","N-A"],[88,"大楊實業","N1420","N-A"],[258,"金全益","N1426","N-A"],[109,"尚余企業","N1435","N-A"],[250,"貿詮實業","N1443","N-A"],[79,"喬邁企業","N1450","N-A"],
+  [314,"龍志五金工業","N1503","N-B"],[42,"允拓材料科技","N1504","N-B"],[122,"建龍工業","N1507","N-B"],[265,"鉅創國際五金","N1509","N-B"],[34,"佾銳科技五金","N1511","N-B"],[280,"鑫成星緊固件","N1512","N-B"],[163,"晴岡企業","N1513","N-B"],[229,"至善行興業","N1514","N-B"],[97,"宏伽工業","N1517","N-B"],[153,"春名","N1518","N-B"],[111,"岡山東穎開發","N1520","N-B"],[253,"路竹新益工廠","N1526","N-B"],[299,"順承企業","N1536","N-B"],[169,"格福興業","N1546","N-B"],[75,"吉立登實業","N1550","N-B"],[284,"長益螺絲","N1603","N-B"],[155,"春澤企業","N1607","N-B"],[272,"鋐騰國際","N1609","N-B"],[143,"新菲斯","N1611","N-B"],[167,"林裕工廠","N1615","N-B"],[22,"久美特企業","N1645","N-B"],[40,"傑螺工業","N1649","N-B"],[270,"銳德克科技","N2108","N-B"],[98,"宏楷科技","N2128","N-B"],[246,"誠睿科技實業","N2134","N-B"],[73,"台超萃取洗淨精機","N2142","N-B"],[251,"超賀空壓科技","N2146","N-B"],[213,"禾億五金","N2204","N-B"],[243,"蘇氏精密工具","N2208","N-B"],[123,"強新工業","N2212","N-B"],[187,"浚展科技","N2228","N-B"],[20,"中碩機械","N2232","N-B"],[203,"皓正","N2236","N-B"],[286,"長達國際","N2240","N-B"],[84,"基準科技","N2242","N-B"],[211,"祥銨金屬","N2245","N-B"],[101,"宏舜企業","N2246","N-B"],[231,"臺灣鉅佳貿易行","N2247","N-B"],[24,"亞東公證","N2248","N-B"],[158,"昭俐","N2249","N-B"],
+  [129,"恒耀國際","N2301","N-C"],[173,"樹德企業","N2308","N-C"],[86,"大寶精密工具","N2317","N-C"],[217,"精湛光學科技","N2318","N-C"],[120,"廣泰金屬工業","N2328","N-C"],[216,"精斌企業","N2331","N-C"],[36,"供群科技","N2332","N-C"],[137,"振鋒企業","N2335","N-C"],[49,"八旺實業","N2336","N-C"],[176,"歐測","N2339","N-C"],[90,"大鎪科技","N2340","N-C"],[68,"台灣富樂","N2341","N-C"],[210,"祐祥事業","N2342","N-C"],[302,"首君企業","N2345","N-C"],[121,"廣源裕實業","N2346","N-C"],[30,"佑宜昌工業","N2347","N-C"],[261,"金禾昌","N2348","N-C"],[83,"國際精工","N2350","N-C"],[108,"寶資工業","N2402","N-C"],[306,"高熱爐業","N2407","N-C"],[313,"鼎誠扣件科技","N2408","N-C"],[67,"台灣基恩斯","N2410","N-C"],[289,"陽屹科技","N2414","N-C"],[135,"拓鑫實業","N2418","N-C"],[300,"順興達","N2424","N-C"],[237,"若雷國際","N2428","N-C"],[21,"久恩企業","N2431","N-C"],[105,"宸富國際","N2432","N-C"],[80,"國祥貿易","N2434","N-C"],[175,"欣錦智能科技","N2435","N-C"],[225,"翔宣富企業","N2436","N-C"],[52,"創維產業","N2439","N-C"],[64,"台灣博曼","N2440","N-C"],[149,"昌勇實業","N2442","N-C"],[39,"偕盟興業","N2443","N-C"],[275,"錳鋼企業","N2445","N-C"],[95,"安喬模具","N2447","N-C"],[63,"台灣中澤","N2448","N-C"],[199,"畯豪科技","N2449","N-C"],[134,"托福實業","N2502","N-C"],
+  [74,"吉瞬興業","N2508","N-D"],[103,"宏銓精密工業","N2509","N-D"],[18,"上冠品","N2518","N-D"],[69,"台灣牙板企業","N2524","N-D"],[304,"馬波斯精密","N2527","N-D"],[232,"臺美科","N2528","N-D"],[162,"普笠國際","N2532","N-D"],[99,"宏源包材","N2533","N-D"],[17,"三鎂鋼刷工業","N2534","N-D"],[70,"台灣美創","N2535","N-D"],[116,"巨鎰","N2536","N-D"],[54,"勇信精密工具","N2538","N-D"],[44,"元利儀器","N2539","N-D"],[65,"台灣喬哈斯科技","N2540","N-D"],[144,"新豐創新技術整合","N2541","N-D"],[205,"益順泰實業","N2542","N-D"],[234,"舜富","N2544","N-D"],[291,"隆穎精密","N2547","N-D"],[208,"真環科技","N2548","N-D"],[37,"俊益鋼鐵","N2549","N-D"],[31,"佑詮工業","N2550","N-D"],[32,"佛帝克企業","N2627","N-D"],[207,"盛鴻金屬科技","N2631","N-D"],[115,"巨展模具工業","N2633","N-D"],[274,"錩鋼精密科技","N2635","N-D"],[294,"雄豪精密","N2639","N-D"],[119,"廣柏實業","N2641","N-D"],[287,"開南金屬工業","N2643","N-D"],
+  [48,"全岑","S1106","S-A"],[113,"峪億五金","S1108","S-A"],[308,"鴻錡興業","S1110","S-A"],[106,"寬仕工業","S1116","S-A"],[230,"至盈實業","S1136","S-A"],[267,"鉑川","S1136","S-A"],[269,"銘慧盛興業","S1152","S-A"],[259,"金利興精密企業","S1201","S-A"],[56,"匯達實業","S1202","S-A"],[288,"開懋","S1203","S-A"],[190,"添福德","S1205","S-A"],[271,"銳禾工業","S1206","S-A"],[282,"長宏工廠","S1210","S-A"],[174,"欣瑞五金企業","S1214","S-A"],[51,"冠誠國際","S1216","S-A"],[92,"奇貿","S1220","S-A"],[60,"友鋮","S1226","S-A"],[305,"高源精密","S1253","S-A"],[260,"金瑞盛實業","S1255","S-A"],[168,"柯穎五金企業","S1301","S-A"],[15,"三友璟工業","S1302","S-A"],[215,"竣鑫工業","S1303","S-A"],[204,"益實企業","S1305","S-A"],[131,"惠旺工業","S1306","S-A"],[58,"協順工業","S1309","S-A"],[298,"韋奕工業","S1310","S-A"],[186,"法斯訥企業","S1313","S-A"],[28,"企龍企業","S1314","S-A"],[273,"鋒泉螺釘","S1315","S-A"],[93,"如保興業","S1316","S-A"],[147,"昇達鑫興業","S1320","S-A"],[164,"朝友工業","S1326","S-A"],[107,"寶源複合材料","S1330","S-A"],[200,"登琳實業","S1351","S-A"],[238,"英德工業","S1352","S-A"],[50,"六曜實業","S1401","S-A"],[283,"長晉盛金屬","S1402","S-A"],[240,"華洋科技","S1405","S-A"],[278,"鐿富企業","S1406","S-A"],[197,"璉龍實業","S1407","S-A"],
+  [309,"鷹世服","S1409","S-B"],[146,"日昇彈簧","S1410","S-B"],[38,"信嵐國際貿易","S1413","S-B"],[46,"元穩實業","S1414","S-B"],[226,"翔笙精密工業","S1415","S-B"],[151,"易連工業","S1416","S-B"],[266,"鉅耕","S1420","S-B"],[27,"今湛企業","S1426","S-B"],[233,"舜倡發企業","S1430","S-B"],[124,"強鑫工業","S1452","S-B"],[180,"毅程工業","S1501","S-B"],[57,"千富企業","S1502","S-B"],[297,"震保企業","S1504","S-B"],[281,"鑫瑞精密工業","S1505","S-B"],[268,"鉮達國際","S1506","S-B"],[262,"金詳企業","S1507","S-B"],[126,"德義海","S1509","S-B"],[161,"普力美精密","S1510","S-B"],[301,"順通國際","S1512","S-B"],[102,"宏茂五金","S1513","S-B"],[72,"台灣銘板","S1514","S-B"],[263,"金鏘國際","S1515","S-B"],[201,"登馳國際","S1516","S-B"],[290,"隆意工業","S1520","S-B"],[152,"昕群企業","S1526","S-B"],[276,"鍵瑋企業","S1528","S-B"],[91,"太子螺絲","S1536","S-B"],[224,"翊創國際企業","S1552","S-B"],[293,"雄益國際","S1603","S-B"],[242,"華邑金屬工業","S1605","S-B"],[132,"慧準精密工具","S1609","S-B"],[223,"義維力國際","S1613","S-B"],[317,"龍浦實業","S1615","S-B"],[33,"佶億工廠","S1617","S-B"],[77,"和泰產業","S1619","S-B"],[94,"威力寶貿易","S2106","S-B"],[59,"友信機械","S2112","S-B"],[254,"連翔工業","S2112","S-B"],[179,"正曜企業","S2120","S-B"],[214,"秉鋒興業","S2132","S-B"],
+  [194,"琛元企業","S2140","S-C"],[145,"旗林","S2144","S-C"],[160,"昶詠機械","S2148","S-C"],[198,"田豐空油壓","S2151","S-C"],[316,"龍業百起","S2205","S-C"],[285,"長薔機械","S2220","S-C"],[26,"仁陽工業","S2232","S-C"],[16,"三永電熱機械","S2240","S-C"],[193,"珈鋐機械","S2244","S-C"],[142,"新環隆機械工業","S2251","S-C"],[62,"台南振昌電機","S2252","S-C"],[127,"忠群螺絲五金","S2305","S-C"],[35,"侑城","S2306","S-C"],[277,"鍵財機械企業","S2311","S-C"],[136,"振太機械企業","S2320","S-C"],[178,"正一直線機械廠","S2328","S-C"],[244,"詮豐傳動科技","S2332","S-C"],[45,"元勝鐵工廠","S2336","S-C"],[184,"沛珅精密工業","S2340","S-C"],[188,"淯群機械","S2344","S-C"],[177,"正一伸線機械廠","S2348","S-C"],[257,"金上源機械","S2350","S-C"],[227,"翰泰含浸企業","S2403","S-C"],[139,"捷禾企業","S2404","S-C"],[29,"伯獅精工","S2408","S-C"],[114,"崇曜國際實業","S2411","S-C"],[23,"久邑","S2412","S-C"],[96,"安拓實業","S2414","S-C"],[138,"捷仂機械","S2420","S-C"],[41,"優廉機器","S2426","S-C"],[245,"詮豐精密工具","S2432","S-C"],[311,"鼎富隆精密機械","S2436","S-C"],[128,"怡邦精密","S2448","S-C"],[89,"大連機械工業","S2450","S-C"],[87,"大憲光學企業","S2451","S-C"],[279,"鑫廣工業","S2503","S-C"],[310,"黃朝泰企業","S2504","S-C"],[295,"集財實業","S2507","S-C"],[110,"山郁貿易","S2508","S-C"],[140,"捷領螺絲興業","S2512","S-C"],
+  [117,"帝潮實業","S2516","S-D"],[81,"國聯機械實業","S2520","S-D"],[292,"雄仁工業","S2528","S-D"],[264,"金騏工業","S2531","S-D"],[43,"允鑫五金工業","S2532","S-D"],[150,"明福駿","S2533","S-D"],[159,"昱銘穎","S2536","S-D"],[241,"華燿精密","S2603","S-D"],[47,"全宏精密工業","S2607","S-D"],[202,"皇亮精密企業","S2609","S-D"],[171,"榮燊科技","S2611","S-D"],[255,"進旌工業","S2613","S-D"],[55,"勝隆鉚釘","S2631","S-D"],[235,"舜煜實業","S2635","S-D"]
 ];
 const ZONES=[
-  ['N-A',68.5,13.5,28.3,22.0],['N-B',56.5,13.5,12.0,22.0],['N-B',43.5,13.5,13.0,22.0],
-  ['N-C',30.2,13.5,13.3,22.0],['N-D',17.2,13.5,13.0,22.0],
-  ['S-A',68.8,41.5,28.0,24.0],['S-B',56.5,41.5,12.3,24.0],['S-B',52.5,41.5,4.0,24.0],
-  ['S-C',30.0,41.5,22.5,24.0],['S-D',17.2,41.5,12.8,24.0],
+  ["N-A",68.5,13.5,28.3,22.0],["N-B",56.5,13.5,12.0,22.0],["N-B",43.5,13.5,13.0,22.0],
+  ["N-C",30.2,13.5,13.3,22.0],["N-D",17.2,13.5,13.0,22.0],
+  ["S-A",68.8,41.5,28.0,24.0],["S-B",56.5,41.5,12.3,24.0],["S-B",52.5,41.5,4.0,24.0],
+  ["S-C",30.0,41.5,22.5,24.0],["S-D",17.2,41.5,12.8,24.0]
 ];
 const LABEL_ZONES={
-  'N-A':[68.5,13.5,28.3,22.0],'N-B':[43.5,13.5,25.0,22.0],'N-C':[30.2,13.5,13.3,22.0],'N-D':[17.2,13.5,13.0,22.0],
-  'S-A':[68.8,41.5,28.0,24.0],'S-B':[43.0,41.5,25.8,24.0],'S-C':[30.0,41.5,22.5,24.0],'S-D':[17.2,41.5,12.8,24.0],
+  "N-A":[68.5,13.5,28.3,22.0],"N-B":[43.5,13.5,25.0,22.0],"N-C":[30.2,13.5,13.3,22.0],"N-D":[17.2,13.5,13.0,22.0],
+  "S-A":[68.8,41.5,28.0,24.0],"S-B":[43.0,41.5,25.8,24.0],"S-C":[30.0,41.5,22.5,24.0],"S-D":[17.2,41.5,12.8,24.0]
 };
 
-let visited={}, selGroup=null, filterPerson='all', query='', isLive=false;
+let visited={}, selGroup=null, filterPerson="all", query="";
 
 function setSync(ok, msg){
-  isLive=ok;
-  [document.getElementById('sdot'), document.getElementById('sdot2')].forEach(d=>{
-    if(!d)return;
-    d.className='sync-dot'+(ok?' live':' err');
+  ["sdot","sdot2"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.className="sync-dot"+(ok?" live":" err");
   });
-  const sm=document.getElementById('syncmsg');
+  const sm=document.getElementById("syncmsg");
   if(sm)sm.textContent=msg;
-  const pm=document.getElementById('prog-mini');
-  if(pm&&!ok)pm.textContent=msg;
+  const pm=document.getElementById("prog-mini");
+  if(pm&&!ok)pm.textContent="連線失敗";
 }
 
-// 即時監聽 Firebase
-onValue(visitedRef, snap=>{
+// 即時監聽
+visitedRef.on("value", snap=>{
   visited = snap.val() || {};
-  setSync(true,'即時同步中 ✓');
+  setSync(true,"即時同步中 ✓");
   updateAll();
 }, err=>{
-  setSync(false,'連線失敗，請重新整理');
+  setSync(false,"連線失敗，請重新整理");
+  console.error("Firebase error:", err);
 });
 
-async function toggleV(id, booth, grp, checked){
-  const k = id+'_'+booth+'_'+grp;
+function toggleV(id, booth, grp, checked){
+  const k = id+"_"+booth+"_"+grp;
   const updates = {};
   updates[k] = checked ? true : null;
-  try{
-    await update(visitedRef, updates);
-  }catch(e){
-    alert('儲存失敗，請檢查網路');
-  }
+  visitedRef.update(updates).catch(e=>{
+    alert("儲存失敗："+e.message);
+  });
 }
 
-function isV(id,b,g){return !!visited[id+'_'+b+'_'+g];}
+function isV(id,b,g){return !!(visited&&visited[id+"_"+b+"_"+g]);}
 function doneInGroup(g){return RAW.filter(r=>r[3]===g&&isV(r[0],r[2],r[3])).length;}
-function updateAll(){updateProg();renderSidebar();renderTable();buildOv();renderDetail();renderLegend();}
+
+function updateAll(){
+  updateProg(); renderSidebar(); renderTable(); buildOv(); renderDetail(); renderLegend();
+}
 
 function updateProg(){
   const done=RAW.filter(r=>isV(r[0],r[2],r[3])).length;
   const pct=Math.round(done/RAW.length*100);
-  document.getElementById('pbfill').style.width=pct+'%';
-  document.getElementById('pbnum').textContent=done+' / '+RAW.length+' 家已拜訪';
-  const pm=document.getElementById('prog-mini');
-  if(pm&&isLive)pm.textContent=done+'/'+RAW.length;
+  document.getElementById("pbfill").style.width=pct+"%";
+  document.getElementById("pbnum").textContent=done+" / "+RAW.length+" 家已拜訪";
+  const pm=document.getElementById("prog-mini");
+  if(pm)pm.textContent=done+"/"+RAW.length;
 }
 
 function buildOv(){
-  const ov=document.getElementById('mapov');
-  let html='';
+  const ov=document.getElementById("mapov");
+  let html="";
   ZONES.forEach(([grp,l,t,w,h])=>{
     const g=GROUPS[grp];
-    const isSel=selGroup===grp, filt=filterPerson!=='all'&&g.person!==filterPerson;
+    const isSel=selGroup===grp, filt=filterPerson!=="all"&&g.person!==filterPerson;
     const op=filt?0.05:(isSel?0.65:0.3);
-    const border=isSel?`2px solid ${g.color}`:`1px solid ${g.color}88`;
-    html+=`<div class="zone" style="left:${l}%;top:${t}%;width:${w}%;height:${h}%;background:${g.color}${Math.round(op*255).toString(16).padStart(2,'0')};border:${border};" onclick="window._selectG('${grp}')" onmouseenter="window._showTip(event,'${grp}')" onmouseleave="window._hideTip()"></div>`;
+    const border=isSel?"2px solid "+g.color:"1px solid "+g.color+"88";
+    const bg=g.color+Math.round(op*255).toString(16).padStart(2,"0");
+    html+=`<div class="zone" style="left:${l}%;top:${t}%;width:${w}%;height:${h}%;background:${bg};border:${border};" onclick="selectG('${grp}')" onmouseenter="showTip(event,'${grp}')" onmouseleave="hideTip()"></div>`;
   });
   Object.entries(LABEL_ZONES).forEach(([grp,[l,t,w,h]])=>{
     const g=GROUPS[grp];
-    if(filterPerson!=='all'&&g.person!==filterPerson)return;
+    if(filterPerson!=="all"&&g.person!==filterPerson)return;
     const done=doneInGroup(grp);
     const cx=l+w/2, cy=t+h/2;
     html+=`<div style="position:absolute;left:${cx}%;top:${cy}%;transform:translate(-50%,-50%);pointer-events:none;text-align:center;z-index:10;"><div style="background:rgba(0,0,0,.72);border-radius:5px;padding:2px 6px;"><div style="font-size:9px;font-weight:700;color:${g.color};font-family:monospace">${grp}</div><div style="font-size:9px;color:#fff">${g.person}</div><div style="font-size:8px;color:#86efac">${done}/${g.count}</div></div></div>`;
@@ -275,113 +277,111 @@ function buildOv(){
   ov.innerHTML=html;
 }
 
-const tt=document.getElementById('tooltip');
-window._showTip=(e,grp)=>{
+const tt=document.getElementById("tooltip");
+function showTip(e,grp){
   const g=GROUPS[grp],done=doneInGroup(grp);
-  const sample=RAW.filter(r=>r[3]===grp).slice(0,4).map(r=>r[1]).join('<br>');
-  const more=g.count>4?`<br><span style="color:#7a80a0">...等${g.count}家</span>`:'';
-  tt.innerHTML=`<div style="font-weight:700;color:${g.color};margin-bottom:4px">${grp} · ${g.person}</div><div style="color:#16a34a;margin-bottom:4px">${done}/${g.count} 已拜訪</div><div style="color:#b0b8cc">${sample}${more}</div>`;
-  tt.style.display='block';tt.style.left=(e.clientX+14)+'px';tt.style.top=(e.clientY-10)+'px';
-};
-window._hideTip=()=>{tt.style.display='none';};
+  const sample=RAW.filter(r=>r[3]===grp).slice(0,4).map(r=>r[1]).join("<br>");
+  tt.innerHTML=`<div style="font-weight:700;color:${g.color};margin-bottom:4px">${grp} · ${g.person}</div><div style="color:#16a34a;margin-bottom:4px">${done}/${g.count} 已拜訪</div><div style="color:#b0b8cc">${sample}</div>`;
+  tt.style.display="block";
+  tt.style.left=(e.clientX+14)+"px";
+  tt.style.top=(e.clientY-10)+"px";
+}
+function hideTip(){tt.style.display="none";}
 
-window._selectG=(grp)=>{
-  selGroup=grp;buildOv();renderDetail();renderSidebar();renderLegend();
+function selectG(grp){
+  selGroup=grp; buildOv(); renderDetail(); renderSidebar(); renderLegend();
   if(window.innerWidth<768)closeSidebar();
-};
+}
 
 function renderDetail(){
-  const d=document.getElementById('detail');
-  if(!selGroup){d.className='detail empty';d.textContent='點選地圖區域查看詳情';return;}
+  const d=document.getElementById("detail");
+  if(!selGroup){d.className="detail empty";d.textContent="點選地圖區域查看詳情";return;}
   const g=GROUPS[selGroup],done=doneInGroup(selGroup);
-  d.className='detail';
+  d.className="detail";
   d.innerHTML=`<span class="d-grp" style="color:${g.color}">${selGroup}</span><span class="d-name">${g.person} · ${g.count}家</span><span class="d-done">${done}/${g.count} 已拜訪</span>`;
 }
 
 function renderLegend(){
-  const leg=document.getElementById('legend');
-  let html='';
+  let html="";
   Object.entries(GROUPS).forEach(([k,g])=>{
     const done=doneInGroup(k);
-    html+=`<div class="leg-item" onclick="window._selectG('${k}')"><div class="leg-dot" style="background:${g.color}"></div><span>${k} ${g.person} ${done}/${g.count}</span></div>`;
+    html+=`<div class="leg-item" onclick="selectG('${k}')"><div class="leg-dot" style="background:${g.color}"></div><span>${k} ${g.person} ${done}/${g.count}</span></div>`;
   });
-  leg.innerHTML=html;
+  document.getElementById("legend").innerHTML=html;
 }
 
 function renderSidebar(){
-  const list=document.getElementById('vlist');
   const q=query.toLowerCase();
   const grouped={};
   RAW.forEach(r=>{
-    const [id,name,booth,grp]=r, p=GROUPS[grp].person;
-    if(filterPerson!=='all'&&p!==filterPerson)return;
+    const [id,name,booth,grp]=r,p=GROUPS[grp].person;
+    if(filterPerson!=="all"&&p!==filterPerson)return;
     if(q&&!name.toLowerCase().includes(q)&&!booth.toLowerCase().includes(q))return;
     if(!grouped[grp])grouped[grp]=[];
     grouped[grp].push(r);
   });
-  if(!Object.keys(grouped).length){list.innerHTML='<div style="padding:16px 12px;font-size:12px;color:#7a80a0">無符合廠商</div>';return;}
-  let html='';
+  if(!Object.keys(grouped).length){document.getElementById("vlist").innerHTML='<div style="padding:16px 12px;font-size:12px;color:#7a80a0">無符合廠商</div>';return;}
+  let html="";
   Object.keys(GROUPS).forEach(gk=>{
     if(!grouped[gk])return;
-    const g=GROUPS[gk], doneC=grouped[gk].filter(r=>isV(r[0],r[2],r[3])).length;
+    const g=GROUPS[gk],doneC=grouped[gk].filter(r=>isV(r[0],r[2],r[3])).length;
     html+=`<div class="grp-hdr" style="color:${g.color}">${gk} · ${g.person} · ${doneC}/${grouped[gk].length}</div>`;
     grouped[gk].forEach(r=>{
-      const [id,name,booth,grp]=r, done=isV(id,booth,grp);
-      html+=`<div class="vi${done?' done':''}"><div class="vdot" style="background:${GROUPS[grp].color}"></div><span class="vn" onclick="window._selectG('${grp}')">${name}</span><span class="vb">${booth}</span><input class="chk" type="checkbox" ${done?'checked':''} onchange="toggleV(${id},'${booth}','${grp}',this.checked)"></div>`;
+      const [id,name,booth,grp]=r,done=isV(id,booth,grp);
+      html+=`<div class="vi${done?" done":""}"><div class="vdot" style="background:${GROUPS[grp].color}"></div><span class="vn" onclick="selectG('${grp}')">${name}</span><span class="vb">${booth}</span><input class="chk" type="checkbox" ${done?"checked":""} onchange="toggleV(${id},'${booth}','${grp}',this.checked)"></div>`;
     });
   });
-  list.innerHTML=html;
+  document.getElementById("vlist").innerHTML=html;
 }
 
 function renderTable(){
   const q=query.toLowerCase();
   const rows=RAW.filter(r=>{
-    if(filterPerson!=='all'&&GROUPS[r[3]].person!==filterPerson)return false;
+    if(filterPerson!=="all"&&GROUPS[r[3]].person!==filterPerson)return false;
     if(q&&!r[1].toLowerCase().includes(q)&&!r[2].toLowerCase().includes(q))return false;
     return true;
   }).sort((a,b)=>a[2].localeCompare(b[2]));
-  let html='';
+  let html="";
   rows.forEach(([id,name,booth,grp])=>{
-    const g=GROUPS[grp], done=isV(id,booth,grp);
-    html+=`<tr class="${done?'done-row':''}" onclick="window._selectG('${grp}')"><td style="font-family:monospace;font-size:11px;color:${g.color}">${booth}</td><td>${name}</td><td class="hide-mob" style="font-size:11px;font-weight:600;color:${g.color}">${g.person}</td><td class="hide-mob"><span class="badge" style="background:${g.color}22;color:${g.color}">${grp}</span></td><td class="chk-td"><input type="checkbox" class="chk" ${done?'checked':''} onclick="event.stopPropagation();toggleV(${id},'${booth}','${grp}',this.checked)"></td></tr>`;
+    const g=GROUPS[grp],done=isV(id,booth,grp);
+    html+=`<tr class="${done?"done-row":""}" onclick="selectG('${grp}')"><td style="font-family:monospace;font-size:11px;color:${g.color}">${booth}</td><td>${name}</td><td class="hide-mob" style="font-size:11px;font-weight:600;color:${g.color}">${g.person}</td><td class="hide-mob"><span class="badge" style="background:${g.color}22;color:${g.color}">${grp}</span></td><td class="chk-td"><input type="checkbox" class="chk" ${done?"checked":""} onclick="event.stopPropagation();toggleV(${id},'${booth}','${grp}',this.checked)"></td></tr>`;
   });
-  document.getElementById('tbody').innerHTML=html||'<tr><td colspan="5" style="text-align:center;padding:20px;color:#7a80a0">無符合資料</td></tr>';
+  document.getElementById("tbody").innerHTML=html||'<tr><td colspan="5" style="text-align:center;padding:20px;color:#7a80a0">無符合資料</td></tr>';
 }
 
-window.openSidebar=()=>{
-  document.getElementById('sidebar').classList.add('open');
-  document.getElementById('overlay').classList.add('show');
-  document.body.style.overflow='hidden';
-};
-window.closeSidebar=()=>{
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('overlay').classList.remove('show');
-  document.body.style.overflow='';
-};
+function openSidebar(){
+  document.getElementById("sidebar").classList.add("open");
+  document.getElementById("overlay").classList.add("show");
+  document.body.style.overflow="hidden";
+}
+function closeSidebar(){
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("overlay").classList.remove("show");
+  document.body.style.overflow="";
+}
 
-document.querySelectorAll('.tab').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
-    if(btn.dataset.tab==='table')renderTable();
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c=>c.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
+    if(btn.dataset.tab==="table")renderTable();
   });
 });
-document.querySelectorAll('.fp').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    document.querySelectorAll('.fp').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
+document.querySelectorAll(".fp").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".fp").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
     filterPerson=btn.dataset.p;
     selGroup=null;
     renderDetail();renderSidebar();renderLegend();buildOv();renderTable();
   });
 });
-document.getElementById('q').addEventListener('input',e=>{
+document.getElementById("q").addEventListener("input",e=>{
   query=e.target.value;renderSidebar();renderTable();
 });
 
-// Initial render placeholders
 buildOv(); renderLegend(); renderDetail();
 </script>
 </body>
